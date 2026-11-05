@@ -1,0 +1,57 @@
+name: Recover verified VPN Windows and Android beta publishing
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release-recovery.yml
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read temporary artifact locations from original manifest, verify exact bytes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json,re,urllib.request,hashlib
+          text=open('.github/workflows/publish-vpn-beta.yml',encoding='utf-8').read()
+          items=[
+            ('WIN_URL','Windows-Vynalth-AI-VPN-Setup-1.1.0.exe',83399896,'ac75b97c22ec9ad59955bc37e8af0ba7136ae4e1717c95f70c402903390d58da'),
+            ('APK_URL','Android-Vynalth-AI-VPN-1.2.1-security-fix.apk',15255790,'09fd8ce9b4f8146c0d09b23151c70bde08e69572940a72579a52137be2d4cd11'),
+          ]
+          for key,name,size,digest in items:
+            match=re.search(r'^\s+'+key+r':\s+(".*")$',text,re.M)
+            if not match: raise SystemExit('Missing source URL for '+name)
+            url=json.loads(match.group(1))
+            if not url.startswith('https://'): raise SystemExit('Source is not HTTPS')
+            req=urllib.request.Request(url,headers={'User-Agent':'VynalthVPN-Beta-Release-Verification'})
+            h=hashlib.sha256(); n=0
+            with urllib.request.urlopen(req,timeout=240) as stream, open(name,'wb') as f:
+              while True:
+                b=stream.read(1024*1024)
+                if not b: break
+                f.write(b); h.update(b); n+=len(b)
+            if n!=size or h.hexdigest()!=digest: raise SystemExit('Integrity check FAILED '+name)
+            print('Verified',name,n,'SHA-256',h.hexdigest())
+          PY
+      - name: Create only prerelease; never overwrite assets
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          TAG='v1.1.0-beta-20261104'
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" Windows-Vynalth-AI-VPN-Setup-1.1.0.exe Android-Vynalth-AI-VPN-1.2.1-security-fix.apk
+          else
+            gh release create "$TAG" Windows-Vynalth-AI-VPN-Setup-1.1.0.exe Android-Vynalth-AI-VPN-1.2.1-security-fix.apk \
+              --target "$GITHUB_SHA" --prerelease \
+              --title 'Vynalth AI VPN — Cross-Platform Beta (November 2026)' \
+              --notes 'Public beta: Windows and Android installers have verified SHA-256. Linux Desktop is pending. Not fully device-tested or production-certified. Windows EXE is not Authenticode signed.'
+          fi
+          gh release view "$TAG" --json tagName,isPrerelease,assets --jq '{tagName, isPrerelease, assetNames:[.assets[].name]}'

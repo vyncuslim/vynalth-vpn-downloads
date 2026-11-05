@@ -1,0 +1,41 @@
+name: Verify Vynalth VPN website beta download activation
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/verify-downloads.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify real API metadata and published URLs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json, urllib.request, time
+          root='https://vynalth-ai-vpn.vercel.app'
+          with urllib.request.urlopen(root+'/api/releases?verify='+str(int(time.time())),timeout=40) as r:
+            assert r.status==200, r.status
+            d=json.load(r)
+          for platform in ['windows','android','linuxGui','linuxCli']:
+            info=d[platform]
+            print(platform,'published=',info.get('published'),'qaApproved=',info.get('qaApproved'),'url=',info.get('url','(not available)'))
+          assert d['windows'].get('published') is True,'Windows download still not active'
+          assert d['android'].get('published') is True,'Android download still not active'
+          assert d['linuxCli'].get('published') is True,'Linux CLI no longer active'
+          assert d['linuxGui'].get('published') is False,'Linux GUI accidentally activated without distribution verification'
+          assert d['windows'].get('qaApproved') is False
+          assert d['android'].get('qaApproved') is False
+          for platform in ['windows','android']:
+            url=d[platform]['url']
+            assert url.startswith('https://github.com/vyncuslim/vynalth-vpn-downloads/releases/download/v1.1.0-beta-20261104/')
+            request=urllib.request.Request(url,method='HEAD')
+            with urllib.request.urlopen(request,timeout=40) as response:
+              assert response.status==200, (platform,response.status)
+              print(platform,'HTTP download final status',response.status)
+          print('WEBSITE_DOWNLOAD_VERIFICATION_PASS')
+          PY

@@ -1,9 +1,9 @@
-name: Verify Vynalth VPN website beta download activation
+name: Verify Vynalth VPN Dual-Stack beta download center
 on:
   push:
     branches: [main]
-    paths:
-      - .github/workflows/verify-downloads.yml
+    paths: [.github/workflows/verify-downloads.yml]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -11,31 +11,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Verify real API metadata and published URLs
+      - name: Verify live API, official release files, SHA and legacy CLI
         shell: bash
         run: |
           set -Eeuo pipefail
           python3 - <<'PY'
-          import json, urllib.request, time
-          root='https://vynalth-ai-vpn.vercel.app'
-          with urllib.request.urlopen(root+'/api/releases?verify='+str(int(time.time())),timeout=40) as r:
-            assert r.status==200, r.status
-            d=json.load(r)
-          for platform in ['windows','android','linuxGui','linuxCli']:
-            info=d[platform]
-            print(platform,'published=',info.get('published'),'qaApproved=',info.get('qaApproved'),'url=',info.get('url','(not available)'))
-          assert d['windows'].get('published') is True,'Windows download still not active'
-          assert d['android'].get('published') is True,'Android download still not active'
-          assert d['linuxCli'].get('published') is True,'Linux CLI no longer active'
-          assert d['linuxGui'].get('published') is False,'Linux GUI accidentally activated without distribution verification'
-          assert d['windows'].get('qaApproved') is False
-          assert d['android'].get('qaApproved') is False
-          for platform in ['windows','android']:
-            url=d[platform]['url']
-            assert url.startswith('https://github.com/vyncuslim/vynalth-vpn-downloads/releases/download/v1.1.0-beta-20261104/')
-            request=urllib.request.Request(url,method='HEAD')
-            with urllib.request.urlopen(request,timeout=40) as response:
-              assert response.status==200, (platform,response.status)
-              print(platform,'HTTP download final status',response.status)
-          print('WEBSITE_DOWNLOAD_VERIFICATION_PASS')
+          import json, urllib.request, hashlib, time
+          expected={"windows":{"name":"Windows-Vynalth-AI-VPN-Setup-1.2.0.exe","sha":"43c0e57c394d3155320ce1c06dc6182da03fc687764a4678d429f1af64629a4d"},"android":{"name":"Android-Vynalth-AI-VPN-1.2.3-dual-stack.apk","sha":"e63f2846a0e6e7a4a6b59f5dd57a593e1a18326e0ae893942db8dc1ea94a62af"},"linuxGui":{"name":"Linux-vynalth-vpn-app-1.2.0-x86_64.tar.gz","sha":"cc1dcf09e1d29ad3f86bd5d1a0639f9edec8d8c7f87e311169e6bb4218b3e40e"}}
+          tag='v1.2.0-beta-dualstack-20261106'
+          repo='vyncuslim/vynalth-vpn-downloads'
+          for host in ['https://vynalth-ai-vpn.vercel.app','https://vpn.page.vynalthai.com']:
+              req=urllib.request.Request(host+'/api/releases?verify='+str(int(time.time())),headers={'User-Agent':'VynalthVPN-ReleaseQA'})
+              with urllib.request.urlopen(req,timeout=40) as r:
+                  assert r.status==200
+                  d=json.load(r)
+              assert d['schemaVersion']==1 and d['releaseTag']==tag
+              for platform,v in expected.items():
+                  i=d[platform]
+                  assert i['published'] is True and i['betaPublished'] is True and i['qaApproved'] is False,platform
+                  assert i['sha256'].lower()==v['sha'],platform
+                  assert i['url']==f'https://github.com/{repo}/releases/download/{tag}/{v["name"]}'
+              assert d['linuxCli']['published'] is True
+              assert d['linuxCli']['sha256'].lower()=='64f32ce669a0fe56e81b29cd4d4ffa9316e777ac3aa64ce3fd4f1ef860aafbcf'
+              print(host,'dual-stack metadata PASS')
+          for platform,v in expected.items():
+              req=urllib.request.Request(f'https://github.com/{repo}/releases/download/{tag}/{v["name"]}',method='HEAD',headers={'User-Agent':'VynalthVPN-ReleaseQA'})
+              with urllib.request.urlopen(req,timeout=40) as r: assert r.status==200,(platform,r.status)
+              print(platform,'public asset HEAD 200 PASS')
+          req=urllib.request.Request('https://vynalth-ai-vpn.vercel.app/downloads/Linux-CLI-vynalth-vpn',headers={'User-Agent':'VynalthVPN-ReleaseQA'})
+          with urllib.request.urlopen(req,timeout=40) as r:
+              assert r.status==200
+              raw=r.read()
+          assert hashlib.sha256(raw).hexdigest()=='64f32ce669a0fe56e81b29cd4d4ffa9316e777ac3aa64ce3fd4f1ef860aafbcf'
+          print('LINUX_CLI_UNCHANGED_PASS')
+          print('PRODUCTION_DUALSTACK_RELEASE_QA_PASS')
           PY

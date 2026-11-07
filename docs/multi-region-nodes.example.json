@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "artifact_type": "non_operational_planning_example",
+  "last_updated": "2026-11-07",
+  "warning": "NOT a live VPN node feed. Client MUST NOT fetch/use this file to provide destinations.",
+  "nodes": [
+    {
+      "id": "SG-01",
+      "country_code": "SG",
+      "country_name": "Singapore",
+      "city": "Singapore",
+      "status": "existing_ipv4",
+      "hostname": "vpn.vynalthai.com",
+      "legacy_ipv4_observed": true,
+      "selectable": false,
+      "operational_evidence": "previous operator report, not a live health check"
+    },
+    {
+      "id": "JP-01",
+      "country_code": "JP",
+      "country_name": "Japan",
+      "city": "Tokyo",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "DE-01",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "city": "Frankfurt",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "US-01",
+      "country_code": "US",
+      "country_name": "United States",
+      "city": "US",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "MY-01",
+      "country_code": "MY",
+      "country_name": "Malaysia",
+      "city": "Kuala Lumpur",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "KR-01",
+      "country_code": "KR",
+      "country_name": "South Korea",
+      "city": "Seoul",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "HK-01",
+      "country_code": "HK",
+      "country_name": "Hong Kong",
+      "city": "Hong Kong",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "GB-01",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "city": "London",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "FR-01",
+      "country_code": "FR",
+      "country_name": "France",
+      "city": "Paris",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "NL-01",
+      "country_code": "NL",
+      "country_name": "Netherlands",
+      "city": "Amsterdam",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "CA-01",
+      "country_code": "CA",
+      "country_name": "Canada",
+      "city": "Toronto",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    },
+    {
+      "id": "AU-01",
+      "country_code": "AU",
+      "country_name": "Australia",
+      "city": "Sydney",
+      "status": "planned",
+      "hostname": null,
+      "legacy_ipv4_observed": false,
+      "selectable": false,
+      "operational_evidence": null
+    }
+  ]
+}
